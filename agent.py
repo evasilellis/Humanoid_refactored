@@ -12,8 +12,19 @@ from xmlrpc.server import SimpleXMLRPCServer, SimpleXMLRPCRequestHandler
 import numpy as np
 from pyflann import *
 import tensorflow as tf
-tf_config = tf.ConfigProto()
-tf_config.gpu_options.allow_growth = True
+
+#tf_config = tf.ConfigProto()
+#tf_config.gpu_options.allow_growth = True
+gpus = tf.config.experimental.list_physical_devices('GPU')
+if gpus:
+    try:
+        # Currently, memory growth needs to be the same across GPUs
+        for gpu in gpus:
+            tf.config.experimental.set_memory_growth(gpu, True)
+    except RuntimeError as e:
+        # Memory growth must be set before GPUs have been initialized
+        print(e)
+
 from matplotlib import pyplot as plt
 
 from rico.image import convert_view_tree
