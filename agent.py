@@ -12,19 +12,9 @@ from xmlrpc.server import SimpleXMLRPCServer, SimpleXMLRPCRequestHandler
 import numpy as np
 from pyflann import *
 import tensorflow as tf
-
-#tf_config = tf.ConfigProto()
-#tf_config.gpu_options.allow_growth = True
-gpus = tf.config.experimental.list_physical_devices('GPU')
-if gpus:
-    try:
-        # Currently, memory growth needs to be the same across GPUs
-        for gpu in gpus:
-            tf.config.experimental.set_memory_growth(gpu, True)
-    except RuntimeError as e:
-        # Memory growth must be set before GPUs have been initialized
-        print(e)
-
+tf.compat.v1.disable_eager_execution()
+tf_config = tf.compat.v1.ConfigProto()
+tf_config.gpu_options.allow_growth = True
 from matplotlib import pyplot as plt
 
 from rico.image import convert_view_tree
@@ -238,9 +228,29 @@ class HumanoidAgent():
             self.train_config_json = json.load(train_config_file)
 
         self.model = MultipleScreenModel(self.train_config_json, training=False)
-        self.saver = tf.train.Saver()
-        self.sess = tf.Session()
-        self.saver.restore(self.sess, config_json["model_path"])
+
+        #self.saver = tf.compat.v1.train.Saver()
+        self.saver = tf.compat.v1.train.Checkpoint()
+
+        #variable_name_mapping = {
+        #    "lstm_2/kernel": "lstm/lstm_cell/kernel",
+        #    #"lstm_2/recurrent_kernel": "lstm/lstm_cell/recurrent_kernel",
+        #    # Add other variable mappings as necessary
+        #}
+
+        #variables_to_restore = {v.name.split(':')[0]: v for v in tf.compat.v1.global_variables() if
+        #                        'lstm/lstm_cell/bias' not in v.name}
+        #self.saver = tf.compat.v1.train.Saver(variables_to_restore, variable_name_mapping)
+
+        self.sess = tf.compat.v1.Session()
+        #self.sess.run(tf.compat.v1.global_variables_initializer())
+        #self.saver = tf.compat.v1.train.import_meta_graph('res/model/model_495000.ckpt.meta')
+
+        #for variable in tf.compat.v1.global_variables():
+        #    print(variable.name)
+
+        #self.saver.restore(self.sess, config_json["model_path"])
+        self.saver.restore(config_json["model_path"])
         self.data_processor = DroidBotDataProcessor(config_json)
         self.text_generator = TextGenerator(config_json)
         print("=== Humanoid XMLRPC service ready at %s:%d ===" % (self.domain, self.rpc_port))
